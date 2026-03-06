@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import argparse
 import glob
 import logging
 import os
@@ -195,7 +194,7 @@ def generate_alphas(clips, device=None, **kwargs):
 
     logger.info(f"Found {len(clips_to_process)} clips missing Alpha.")
 
-    if device is None or device == 'auto':
+    if device is None or device == "auto":
         device = resolve_device()
 
     try:
@@ -226,7 +225,7 @@ def generate_alphas(clips, device=None, **kwargs):
                 mode="matte",
                 write_video=False,
                 direct_output_dir=alpha_output_dir,
-                max_frames=kwargs['max_frames']
+                max_frames=kwargs["max_frames"],
             )
 
             # Post-Process: Naming Convention
@@ -498,7 +497,7 @@ def run_videomama(clips: list[ClipEntry], chunk_size: int = 50, device: str | No
 
 def run_inference(clips, backend=None, max_frames=None, **kwargs):
     ready_clips = [c for c in clips if c.input_asset and c.alpha_asset]
-    device = kwargs['device']
+    device = kwargs["device"]
 
     if not ready_clips:
         logger.info("No clips found with both Input and Alpha assets. Run generate_coarse_alpha first?")
@@ -510,7 +509,7 @@ def run_inference(clips, backend=None, max_frames=None, **kwargs):
     logger.debug("\n--- Inference Settings ---")
 
     # 1. Gamma Prompt
-    if kwargs['action'] == 'wizard':
+    if kwargs["action"] == "wizard":
         user_input_is_linear = False
         gamma_choice = input("Is the input sequence Linear (l) or sRGB (s)? [l/s]: ").strip().lower()
         if gamma_choice == "l":
@@ -519,10 +518,10 @@ def run_inference(clips, backend=None, max_frames=None, **kwargs):
         else:
             logger.debug("User selected: sRGB Input (or default)")
     else:
-        user_input_is_linear = kwargs['gamma_encoding'] == 'linear'
+        user_input_is_linear = kwargs["gamma_encoding"] == "linear"
 
     # 2. Despill Prompt
-    if kwargs['action'] == 'wizard':
+    if kwargs["action"] == "wizard":
         despill_val = input("Enter Despill Strength (0-10, 10 is max despill) [default 10]: ").strip()
         try:
             despill_int = int(despill_val)
@@ -530,15 +529,17 @@ def run_inference(clips, backend=None, max_frames=None, **kwargs):
         except ValueError:
             despill_int = 10
     else:
-        despill_int = kwargs['despill_strength']
+        despill_int = kwargs["despill_strength"]
 
     despill_strength = despill_int / 10.0
     logger.debug(f"User selected: Despill Strength {despill_int}/10 ({despill_strength})")
     # 3. Auto-Despeckle Prompt
-    if kwargs['action'] == 'wizard':
+    if kwargs["action"] == "wizard":
         auto_despeckle = True
         despeckle_size = 400
-        despeckle_choice = input("Enable Auto-Despeckle (removes tracking dots in Processed/Comp)? [Y/n]: ").strip().lower()
+        despeckle_choice = (
+            input("Enable Auto-Despeckle (removes tracking dots in Processed/Comp)? [Y/n]: ").strip().lower()
+        )
         if despeckle_choice == "n":
             auto_despeckle = False
             logger.info("User selected: Auto-Despeckle OFF")
@@ -552,11 +553,11 @@ def run_inference(clips, backend=None, max_frames=None, **kwargs):
                 despeckle_size = 400
             logger.info(f"User selected: Auto-Despeckle Size {despeckle_size}px")
     else:
-        auto_despeckle = kwargs['despeckle']
-        despeckle_size = kwargs['despeckle_size']
+        auto_despeckle = kwargs["despeckle"]
+        despeckle_size = kwargs["despeckle_size"]
 
     # 4. Refiner Strength Prompt
-    if kwargs['action'] == 'wizard':
+    if kwargs["action"] == "wizard":
         refiner_val = input("Enter Refiner Strength (multiplier) [default 1.0] (experimental): ").strip()
         if refiner_val == "":
             refiner_scale = 1.0
@@ -567,7 +568,7 @@ def run_inference(clips, backend=None, max_frames=None, **kwargs):
                 refiner_scale = 1.0
         logger.info(f"User selected: Refiner Strength {refiner_scale}")
     else:
-        refiner_scale = kwargs['refiner_strength']
+        refiner_scale = kwargs["refiner_strength"]
 
     logger.debug("--------------------------\n")
 
@@ -577,7 +578,7 @@ def run_inference(clips, backend=None, max_frames=None, **kwargs):
 
     import numpy as np
 
-    if device is None or device == 'auto':
+    if device is None or device == "auto":
         device = resolve_device()
     from CorridorKeyModule.backend import create_engine
 
@@ -624,12 +625,12 @@ def run_inference(clips, backend=None, max_frames=None, **kwargs):
             alpha_files = sorted([f for f in os.listdir(clip.alpha_asset.path) if is_image_file(f)])
 
         for i in range(num_frames):
-            logging.info(f"Frame {i+1}/{num_frames}...")
+            logging.info(f"Frame {i + 1}/{num_frames}...")
             t_start_frame_processing = time.time()
             t_last_operation = time.time()
 
             # 1. Read Input
-            logging.debug(f"\t1. Read Input")
+            logging.debug("\t1. Read Input")
             img_srgb = None
             input_stem = f"{i:05d}"
 
@@ -666,7 +667,7 @@ def run_inference(clips, backend=None, max_frames=None, **kwargs):
             elapsed = time.time() - t_last_operation
             t_last_operation = time.time()
             logging.debug(f"\t\tElapsed time: {elapsed:.3f} seconds")
-            logging.debug(f"\t2. Read Alpha (Mask)")
+            logging.debug("\t2. Read Alpha (Mask)")
             mask_linear = None
             if alpha_cap:
                 ret, frame = alpha_cap.read()
@@ -704,7 +705,7 @@ def run_inference(clips, backend=None, max_frames=None, **kwargs):
             elapsed = time.time() - t_last_operation
             t_last_operation = time.time()
             logging.debug(f"\t\tElapsed time: {elapsed:.3f} seconds")
-            logging.debug(f"\t3. Process")
+            logging.debug("\t3. Process")
             USE_STRAIGHT_MODEL = True
             res = engine.process_frame(
                 img_srgb,
@@ -724,7 +725,7 @@ def run_inference(clips, backend=None, max_frames=None, **kwargs):
             elapsed = time.time() - t_last_operation
             t_last_operation = time.time()
             logging.debug(f"\t\tElapsed time: {elapsed:.3f} seconds")
-            logging.debug(f"\t4. Save (EXR DWAB Half-Float)")
+            logging.debug("\t4. Save (EXR DWAB Half-Float)")
 
             # Compression Params
             exr_flags = [
@@ -750,7 +751,7 @@ def run_inference(clips, backend=None, max_frames=None, **kwargs):
             elapsed = time.time() - t_last_operation
             t_last_operation = time.time()
             logging.debug(f"\t\tElapsed time: {elapsed:.3f} seconds")
-            logging.debug(f"\t5. Generate Reference Comp")
+            logging.debug("\t5. Generate Reference Comp")
             comp_srgb = res["comp"]
             # Save Comp (PNG 8-bit)
             comp_bgr = cv2.cvtColor((np.clip(comp_srgb, 0.0, 1.0) * 255.0).astype(np.uint8), cv2.COLOR_RGB2BGR)
@@ -761,7 +762,7 @@ def run_inference(clips, backend=None, max_frames=None, **kwargs):
             logging.debug(f"\t\tElapsed time: {elapsed:.3f} seconds")
             # 6. Save Processed (RGBA EXR)
             if "processed" in res:
-                logging.debug(f"\t6. Save Processed (RGBA EXR)")
+                logging.debug("\t6. Save Processed (RGBA EXR)")
                 # Result is RGBA
                 proc_rgba = res["processed"]
                 # Convert to BGRA for OpenCV

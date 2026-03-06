@@ -28,15 +28,17 @@ from clip_manager import (
     map_path,
     organize_target,
     run_inference,
-    run_videomama
+    run_videomama,
 )
 from device_utils import resolve_device
 
+
 def wizard_print(action, msg):
-    if action == 'wizard':
+    if action == "wizard":
         print(msg)
     else:
         logging.debug(msg)
+
 
 def do_process(
     despill_strength,
@@ -49,7 +51,7 @@ def do_process(
     refiner_strength,
     action,
     input_path,
-    **kwargs
+    **kwargs,
 ) -> None:
     wizard_print(action, "\n" + "=" * 60)
     wizard_print(action, " CORRIDOR KEY - SMART WIZARD")
@@ -127,11 +129,11 @@ def do_process(
                 wizard_print(action, f"  - ...and {len(dirs_needing_org)} others.")
 
         # 3. Organize Loop
-        if (action == "wizard"):
-            yn = input("\n[1] Organize Clips & Create Hint Folders? [y/N]: ").strip().lower() == 'y'
+        if action == "wizard":
+            yn = input("\n[1] Organize Clips & Create Hint Folders? [y/N]: ").strip().lower() == "y"
         else:
             yn = organize_clips
-            
+
         if yn:
             # Organize loose videos first
             for v in loose_videos:
@@ -227,7 +229,7 @@ def do_process(
         # Combine checks for actions
         missing_alpha = masked + raw
 
-        if action == 'wizard':
+        if action == "wizard":
             print("\nACTIONS:")
             if missing_alpha:
                 print(f"  [v] Run VideoMaMa (Found {len(masked)} ready with masks)")
@@ -291,14 +293,22 @@ def do_process(
             run_videomama(missing_alpha, chunk_size=50, **locals())
             break
 
+
 def main() -> None:
     warnings.filterwarnings("ignore")
 
     parser = argparse.ArgumentParser(description="CorridorKey")
     parser.add_argument("--despill-strength", help=r"0-[10]", type=int, default=10)
-    parser.add_argument("--despeckle", help=r"[True]/False Removes tracking dots in Processed/Comp", type=bool, default=True)
+    parser.add_argument(
+        "--despeckle", help=r"[True]/False Removes tracking dots in Processed/Comp", type=bool, default=True
+    )
     parser.add_argument("--despeckle-size", help=r"Default: 400 (min pixels for spot)", type=int, default=400)
-    parser.add_argument("--device", choices=["auto", "cuda", "mps", "cpu"], default="auto", help="Compute device (default: auto-detect CUDA > MPS > CPU)")
+    parser.add_argument(
+        "--device",
+        choices=["auto", "cuda", "mps", "cpu"],
+        default="auto",
+        help="Compute device (default: auto-detect CUDA > MPS > CPU)",
+    )
     parser.add_argument("--gamma-encoding", help=r"Default: srgb", choices=["linear", "srgb"], default="srgb")
     parser.add_argument("--max-frames", help=r"Number of frames to process", type=int, default=None)
     parser.add_argument("--organize-clips", help=r"[True]/False Organizes files/folders", type=bool, default=True)
@@ -309,8 +319,7 @@ def main() -> None:
     parser.add_argument("input_path", help=r"File/Folder path to scan for shots/projects", default=None)
     args = parser.parse_args()
     logging.basicConfig(
-        level=getattr(logging, args.log_level.upper()),
-        format="%(asctime)s - %(levelname)s - %(message)s"
+        level=getattr(logging, args.log_level.upper()), format="%(asctime)s - %(levelname)s - %(message)s"
     )
 
     device = resolve_device(args.device)
@@ -321,6 +330,7 @@ def main() -> None:
     except KeyboardInterrupt:
         print("\nInterrupted.")
         sys.exit(130)
+
 
 if __name__ == "__main__":
     main()

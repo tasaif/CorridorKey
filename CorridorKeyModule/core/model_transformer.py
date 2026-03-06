@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import logging
+
 import timm
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import logging
 
 logger = logging.getLogger(__name__)
+
 
 class MLP(nn.Module):
     """Linear embedding: C_in -> C_out."""
